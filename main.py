@@ -13,7 +13,6 @@ def input_voice(event_queue:multiprocessing.Queue):
   # pyaudio instances must be used in the same thread they are created
   devices = speech_recognition.Microphone.list_microphone_names()
   r = speech_recognition.Recognizer()
-  my_mic = speech_recognition.Microphone(device_index=devices.index('jack'))
   FRAMES_PER_BUFFER = 3200
   FORMAT = pyaudio.paInt16
   CHANNELS = 1
@@ -37,17 +36,13 @@ def input_voice(event_queue:multiprocessing.Queue):
   while True:
     data += stream.read(stream.get_read_available())
 
-    print('got data')
     audio = speech_recognition.AudioData(data, RATE, 2)
     try:
         text = r.recognize_google(audio)
-        print('got text')
         if text == pending_text:
           no_change_count += 1
 
         pending_text = text
-        print('text', pending_text)
-        print('pending_text', pending_text)
         if no_change_count >= 2:
           output:str = re.sub('travis', 'jarvis', pending_text, flags=re.IGNORECASE)
 
@@ -60,11 +55,11 @@ def input_voice(event_queue:multiprocessing.Queue):
             event_queue.put(output)
     except speech_recognition.UnknownValueError:
       # prune the empty data, but don't clear the data buffer so we don't lose the beginning of a word
-      data = data[-FRAMES_PER_BUFFER*20:]
+      data = data[-FRAMES_PER_BUFFER*10:]
 
 #### middle processing
 def process_color_hex(input_signal:str):
-  prompt = f'Hex code for {input_signal} #'
+  prompt = f'what is the rgb code for {input_signal}\n#'
   result = gpt_interface.proxy({
     'prompt': prompt,
     'max_tokens': 40,
