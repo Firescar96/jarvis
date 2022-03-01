@@ -39,23 +39,25 @@ def input_voice(event_queue:multiprocessing.Queue):
     audio = speech_recognition.AudioData(data, RATE, 2)
     try:
         text = r.recognize_google(audio)
+        print('raw text', text)
         if text == pending_text:
           no_change_count += 1
 
         pending_text = text
-        if no_change_count >= 2:
+        if no_change_count:
           output:str = re.sub('travis', 'jarvis', pending_text, flags=re.IGNORECASE)
+          output = re.sub('^(.*) (?=jarvis)', '', output, flags=re.IGNORECASE)
 
           pending_text = ''
           # technically this might drop the start of another text phrase, will adjust if it turns out to be an issue
-          data = b''
+          data = data[-FRAMES_PER_BUFFER*4:]
           no_change_count = 0
           if output.lower().startswith('jarvis'):
             output = re.sub('^jarvis', '', output, flags=re.IGNORECASE)
             event_queue.put(output)
     except speech_recognition.UnknownValueError:
       # prune the empty data, but don't clear the data buffer so we don't lose the beginning of a word
-      data = data[-FRAMES_PER_BUFFER*10:]
+      data = data[-FRAMES_PER_BUFFER*4:]
 
 #### middle processing
 def process_color_hex(input_signal:str):
