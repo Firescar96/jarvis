@@ -1,7 +1,8 @@
 import asyncio
 import json
 import aiohttp
-from colormath.color_objects import AdobeRGBColor, xyYColor
+from gpt_interface import process_color_hex
+from colormath.color_objects import sRGBColor, xyYColor
 from colormath.color_conversions import convert_color
 import urllib3
 from secrets import hue_username, hue_host, hue_rooms
@@ -16,7 +17,26 @@ async def gather_with_concurrency(n, *tasks):
             return await task
     return await asyncio.gather(*(sem_task(task) for task in tasks))
 
-async def output_lights(color):
+lights = []
+async def setup():
+    async with aiohttp.ClientSession() as session:
+        device_rids = []
+        for room in hue_rooms:
+            url = f"https://{hue_host}/clip/v2/resource/room/{room}"
+            response = await session.get(url, headers={'hue-application-key': hue_username}, ssl=False)
+            children = (await response.json())['data'][0]['children']
+            device_rids.extend([x['rid'] for x in children])
+
+        for device in device_rids:
+            url = f"https://{hue_host}/clip/v2/resource/device/{device}"
+            response = await session.get(url, headers={'hue-application-key': hue_username}, ssl=False)
+            services = (await response.json())['data'][0]['services']
+            lights.extend([x for x in services if x['rtype'] == 'light'])
+asyncio.get_event_loop().run_until_complete(setup())
+
+async def output_lights(color_text):
+    color = process_color_hex(color_text)
+
     # color may be in two different formats, FFF and FFFFFF
     char_per_color = len(color)/3
     max_color = ((16**char_per_color)-1)
@@ -24,17 +44,11 @@ async def output_lights(color):
     green = int(color[int(char_per_color):int(2*char_per_color)], 16) / max_color
     blue = int(color[int(2*char_per_color):], 16) / max_color
 
-    xyY = convert_color(AdobeRGBColor(red, green, blue), xyYColor)
+    xyY = convert_color(sRGBColor(red, green, blue), xyYColor)
     # taking the max is more what I want, although xyY.xyy_Y is supposed to be brightness
     brightness = max(red, green, blue) * 100
     
     async with aiohttp.ClientSession() as session:
-        lights = []
-        for room in hue_rooms:
-            url = f"https://{hue_host}/clip/v2/resource/room/{room}"
-            response = await session.get(url, headers={'hue-application-key': hue_username}, ssl=False)
-            services = (await response.json())['data'][0]['services']
-            lights.extend([x for x in services if x['rtype'] == 'light'])
 
         tasks = []
         for light in lights:
@@ -46,72 +60,41 @@ async def output_lights(color):
             }), headers={'hue-application-key': hue_username}, ssl=False))
         
         #hue bridge can only handle so many requests at once, empirically 3 works and is better than 1, but 15 is too many
-        await gather_with_concurrency(3, *tasks)
+        await gather_with_concurrency(1, *tasks)
 
 
 
+async def input_lights():
+    async with aiohttp.ClientSession() as session:
+
+        tasks = []
+        for light in lights:
+            url = f"https://{hue_host}/clip/v2/resource/light/{light['rid']}"
+            tasks.append(session.get(url, data=json.dumps({
+                
+            }), headers={'hue-application-key': hue_username}, ssl=False))
+        
+        #hue bridge can only handle so many requests at once, empirically 3 works and is better than 1, but 15 is too many
+        results = await gather_with_concurrency(1, *tasks)
+        results = await asyncio.gather(*[x.json() for x in results])
+        light_colors = {}
+        for index, res in enumerate(results):
+            xyy_color = {**res['data'][0]['color']['xy'], 'brightness': res['data'][0]['dimming']['brightness']}
+            rgb:sRGBColor = convert_color(xyYColor(xyy_color['x'], xyy_color['y'], xyy_color['brightness']/100), sRGBColor)
+            light_data = {
+                'r': rgb.clamped_rgb_r,
+                'g': rgb.clamped_rgb_g,
+                'b': rgb.clamped_rgb_b,
+                'on': res['data'][0]['on']['on']
+            }
+            light_colors[lights[index]['rid']] = light_data
+        return light_colors
 
 
+# testing section
+# async def main():
+#     light_colors = await input_lights()
+#     print(light_colors)
 
-
-
-
-
-
-
-# This works, but I have no use for the entertainment api right now
-
-# from contextlib import suppress
-# from mbedtls import tls
-    # num_lights = {
-    #     'e2f27d28-5f55-471d-b9c9-0b7270d6f4f4': 6,
-    #     'bc41b027-5fc7-4be1-9a0a-52246090323f': 10,
-    # }
-    # for entertainment_id in num_lights:
-    #     url = f"https://{host}/clip/v2/resource/entertainment_configuration/{entertainment_id}"
-
-    #     response = requests.put(url, data=json.dumps({'action': 'start'}), headers={'hue-application-key': username}, verify=False)
-
-    #     print('entertainment_id', entertainment_id)
-    #     dtls_cli_ctx = tls.ClientContext(tls.DTLSConfiguration(
-    #         pre_shared_key=(username, client_key),
-    #         validate_certificates=False,
-    #     ))
-    #     dtls_cli = dtls_cli_ctx.wrap_socket(
-    #         socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
-    #         server_hostname=None,
-    #     )
-    #     dtls_cli.connect((host, 2100))
-    #     def block(callback, *args, **kwargs):
-    #         while True:
-    #             with suppress(tls.WantReadError, tls.WantWriteError):
-    #                 return callback(*args, **kwargs)
-
-
-    #     block(dtls_cli.do_handshake)
-
-
-    #     header = [
-    #         b'HueStream', #protocol
-    #         b'\x02', b'\x00', #version 2.0
-    #         b'\x01', #sequence number 1
-    #         b'\x00', b'\x00', #reserved
-    #         b'\x00', #color mode RGB
-    #         b'\x00', #reserved
-    #         entertainment_id.encode() #entertainment configuration
-    #     ]
-    #     header = b''.join(header)
-
-    #     data = header
-    #     red = int(color[0:2], 16)<<8
-    #     green = int(color[2:4], 16)<<8
-    #     blue = int(color[4:6], 16)<<8
-    #     for i in range(num_lights[entertainment_id]):
-    #         data += i.to_bytes(1, 'big')
-    #         data += red.to_bytes(2, 'big')
-    #         data += green.to_bytes(2, 'big')
-    #         data += blue.to_bytes(2, 'big')
-
-    #     dtls_cli.send(data)
-
-        # requests.put(url, data=json.dumps({'action': 'stop'}), headers={'hue-application-key': username}, verify=False)
+# if __name__ == "__main__":
+#     asyncio.get_event_loop().run_until_complete(main())
