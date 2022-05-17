@@ -32,7 +32,7 @@ async def setup():
             response = await session.get(url, headers={'hue-application-key': hue_username}, ssl=False)
             services = (await response.json())['data'][0]['services']
             lights.extend([x for x in services if x['rtype'] == 'light'])
-asyncio.get_event_loop().run_until_complete(setup())
+    
 
 async def output_lights(color_text):
     color = process_color_hex(color_text)
@@ -85,7 +85,8 @@ async def input_lights():
                 'r': rgb.clamped_rgb_r,
                 'g': rgb.clamped_rgb_g,
                 'b': rgb.clamped_rgb_b,
-                'on': res['data'][0]['on']['on']
+                'on': res['data'][0]['on']['on'],
+                'type': 'light'
             }
             light_colors[lights[index]['rid']] = light_data
         return light_colors

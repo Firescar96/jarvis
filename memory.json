@@ -1,6 +1,8 @@
 {
-  "keywords": ["lights", "off", "hue"],
-  "examples": [
-    {"on": false}
-  ]
+  "commands": [{
+    "keywords": ["lights", "off", "hue"],
+    "sensorState": [ 
+    ]
+  }]
+  
 }

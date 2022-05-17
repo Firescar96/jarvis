@@ -1,11 +1,29 @@
+# https://spacy.io/usage/linguistic-features#pos-tagging
 from unittest import result
 import spacy
+import json
 nlp = spacy.load('en_core_web_sm')
 
-def process_text(text):
+def learn_state(text:str):
+  with open('memory.json', 'r',) as f:
+    memory = json.load(f)
+
+  for command in memory['commands']:
+    if all([x in text.split(' ') for x in command['keywords']]):
+      
+
+  with open('memory.json', 'w',) as f:
+    json.dump(memory, f)
+
+
+def process_text(text:str):
   next_stage = {}
   print('process tesc', text)
   parsed_text = nlp(text)
+
+  if text.lower().startswith() == 'learn':
+    learn_state(text)
+
   #get token dependencies
   if 'light' not in text:
     return
@@ -39,7 +57,8 @@ def process_text(text):
 
 result = process_text('jarvis adjust the lights to be a bright purple')
 print(result)
-parsed_text = nlp('jarvis adjust the lights in the living room to be a bright purple')
-spacy.displacy.serve(parsed_text, style="dep")
-parsed_text = nlp('jarvis turn the lights on')
-spacy.displacy.serve(parsed_text, style="dep")
+# parsed_text = nlp('jarvis adjust the lights in the living room to be a bright purple')
+# spacy.displacy.serve(parsed_text, style="dep")
+# parsed_text = nlp('jarvis turn the lights on')
+# spacy.displacy.serve(parsed_text, style="dep")
+learn_state('learn the light is on')
