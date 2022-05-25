@@ -1,8 +1,0 @@
-{
-  "commands": [{
-    "keywords": ["lights", "off", "hue"],
-    "sensorState": [ 
-    ]
-  }]
-  
-}
