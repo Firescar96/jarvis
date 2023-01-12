@@ -1,8 +1,10 @@
 import time
 import asyncio
 import multiprocessing
+import traceback
 import hue_interface
 import voice_interface
+import chatgpt_interface
 #### inputs
 
 
@@ -17,12 +19,14 @@ def output_console(input_signal:str):
 main_event_queue = multiprocessing.Queue()
 
 event_listeners = {
-  'hue_interface.output_lights': hue_interface.output_lights
+  'hue_interface.output_lights': hue_interface.output_lights,
+  'chatgpt_interface.default': chatgpt_interface.default  
 }
 
 exit_handlers = []
 async def main():
   await hue_interface.setup()
+  await chatgpt_interface.setup()
   voice_interface.input_voice(main_event_queue, exit_handlers)
 
   jarvis_active = True
@@ -38,11 +42,12 @@ async def main():
       await event_listeners[next_event['name']](*next_event['args'])
     except Exception as e:
       print(e)
+      traceback.print_exc()
       continue
 
 
 try:
-    asyncio.get_event_loop().run_until_complete(main()) 
+    asyncio.run(main()) 
 except (KeyboardInterrupt, SystemExit):
     for handler in exit_handlers:
       handler()

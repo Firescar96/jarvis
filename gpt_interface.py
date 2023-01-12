@@ -13,7 +13,6 @@ class GPT3Interface():
     }
 
   def proxy(self, data):
-    print(data)
     return requests.post(
       'https://api.openai.com/v1/engines/text-davinci-001/completions',
       data=json.dumps(data),
@@ -28,11 +27,8 @@ def process_color_hex(input_signal:str):
 
   if input_signal in interface_memory:
     for possible_output in interface_memory[input_signal]:
-      if random.random() > possible_output.probability:
-        interface_memory[input_signal].probability = min(interface_memory[input_signal].probability*1.2, 1)
-        with open('gpt_interface.json', 'w') as f:
-          json.dump(interface_memory, f)
-        return interface_memory[input_signal].output
+      if possible_output['probability'] > random.random():
+        return possible_output['output']
   else:
     interface_memory[input_signal] = []
 
@@ -43,15 +39,18 @@ def process_color_hex(input_signal:str):
     'max_tokens': 40,
     'temperature': .3
   })
-  print(result.text)
   output = result.json()['choices'][0]['text'].replace('\n', '')
   output = re.findall(r'#?(\w+).?$', output)[0]
 
-  interface_memory[input_signal].append({
-    'input': input_signal,
-    'probability': .5,
-    'output': output
-  })
+  for possible_output in interface_memory[input_signal]:
+    if possible_output['output'] == output:
+        possible_output['probability'] = min(possible_output['probability']*1.2, 1)
+  else:
+    interface_memory[input_signal].append({
+      'input': input_signal,
+      'probability': .5,
+      'output': output
+    })
 
   with open('gpt_interface.json', 'w') as f:
     json.dump(interface_memory, f)

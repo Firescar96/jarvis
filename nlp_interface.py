@@ -1,25 +1,24 @@
 # https://spacy.io/usage/linguistic-features#pos-tagging
 from unittest import result
 import spacy
-import json
 nlp = spacy.load('en_core_web_sm')
 
 def process_text(text:str):
   next_stage = {}
-  print('process tesc', text)
+  print('process text', text)
   parsed_text = nlp(text)
 
   #get token dependencies
   if 'light' not in text:
-    return
+    return {
+      'name': 'chatgpt_interface.default',
+      'args': [text]
+    } 
 
   for token in parsed_text:
     #dobj for direct object, attr=attribute prt=particle
     if token.dep_ not in ["dobj", 'ccomp', 'pobj', 'attr', 'prt', 'prep']:
       continue
-  
-    direct_object_tree = [x.lemma_ for x in token.children]
-    print('direct_object_tree', token.text, direct_object_tree)
 
     full_color_phrase = []
     for child in token.lefts:
@@ -38,7 +37,13 @@ def process_text(text:str):
         'name': 'hue_interface.output_lights',
         'args': [full_color_phrase]
       }
-  return next_stage
+  if next_stage:
+    return next_stage
 
-result = process_text('jarvis adjust the lights to be a bright purple')
-print(result)
+  return {
+    'name': 'chatgpt_interface.default',
+    'args': [text]
+  }
+
+# result = process_text('jarvis adjust the lights to be a bright purple')
+# print(result)

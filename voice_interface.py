@@ -8,7 +8,7 @@ def runner(event_queue:multiprocessing.Queue):
   # pyaudio instances must be used in the same thread they are created
   # devices = speech_recognition.Microphone.list_microphone_names()
   r = speech_recognition.Recognizer()
-  FRAMES_PER_BUFFER = 3200
+  FRAMES_PER_BUFFER = 4000
   FORMAT = pyaudio.paInt16
   CHANNELS = 1
   RATE = 16000
@@ -40,7 +40,7 @@ def runner(event_queue:multiprocessing.Queue):
 
       pending_text = text
       if no_change_count>1:
-        output:str = re.sub('(travis|chadwick)', 'jarvis', pending_text, flags=re.IGNORECASE)
+        output:str = re.sub('(travis|chadwick|alfred)', 'jarvis', pending_text, flags=re.IGNORECASE)
         output = re.sub('^(.*) (?=jarvis)', '', output, flags=re.IGNORECASE)
 
         pending_text = ''
