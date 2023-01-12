@@ -38,10 +38,12 @@ async def default(text:str):
 
   async for partial_response in chunk(bot.ask_stream(text), 10):
     print('partial_response', partial_response)
+    if not partial_response:
+      continue
     mp3_fp = BytesIO()
     tts = gTTS(partial_response, lang='en', tld='co.uk')
     if not tts._tokenize(partial_response):
-      break
+      continue
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
     audio = AudioSegment.from_file(mp3_fp, format="mp3")
