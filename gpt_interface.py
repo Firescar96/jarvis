@@ -3,7 +3,7 @@ import requests;
 import json
 import re
 import random
-from secrets import gpt3_key
+from jarvis_secrets import gpt3_key
 
 class GPT3Interface():
   def __init__(self):

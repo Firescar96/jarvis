@@ -48,7 +48,7 @@ async def default(text:str):
     mp3_fp.seek(0)
     audio = AudioSegment.from_file(mp3_fp, format="mp3")
     audio = speedup(audio,1.3,150)
-    audio_queue.put(audio.raw_data[6000:-12000])
+    audio_queue.put(audio.raw_data[6000:-8000])
 
   audio_queue.put(None)
   

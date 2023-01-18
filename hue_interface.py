@@ -5,7 +5,7 @@ from gpt_interface import process_color_hex
 from colormath.color_objects import sRGBColor, xyYColor
 from colormath.color_conversions import convert_color
 import urllib3
-from secrets import hue_username, hue_host, hue_rooms
+from jarvis_secrets import hue_username, hue_host, hue_rooms
 urllib3.disable_warnings()
 
 
