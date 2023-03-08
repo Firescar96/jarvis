@@ -26,7 +26,6 @@ event_listeners = {
 exit_handlers = []
 async def main():
   await hue_interface.setup()
-  await chatgpt_interface.setup()
   voice_interface.input_voice(main_event_queue, exit_handlers)
 
   jarvis_active = True

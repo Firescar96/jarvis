@@ -34,12 +34,14 @@ def process_color_hex(input_signal:str):
 
   
   prompt = f'what is the rgb code for {input_signal}\n#'
+  print('prompt', prompt)
   result = default_interface.proxy({
     'prompt': prompt,
     'max_tokens': 40,
     'temperature': .3
   })
   output = result.json()['choices'][0]['text'].replace('\n', '')
+  print('output', output)
   output = re.findall(r'#?(\w+).?$', output)[0]
 
   for possible_output in interface_memory[input_signal]:

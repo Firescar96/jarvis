@@ -37,6 +37,7 @@ def process_text(text:str):
         'name': 'hue_interface.output_lights',
         'args': [full_color_phrase]
       }
+  print('next_stage', next_stage)
   if next_stage:
     return next_stage
 
