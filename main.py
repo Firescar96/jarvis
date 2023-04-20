@@ -27,7 +27,7 @@ exit_handlers = []
 async def main():
   await hue_interface.setup()
   voice_interface.input_voice(main_event_queue, exit_handlers)
-
+  
   jarvis_active = True
   while jarvis_active:
     time.sleep(.5)
@@ -40,7 +40,6 @@ async def main():
     try:
       await event_listeners[next_event['name']](*next_event['args'])
     except Exception as e:
-      print(e)
       traceback.print_exc()
       continue
 

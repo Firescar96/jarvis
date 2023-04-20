@@ -5,7 +5,6 @@ nlp = spacy.load('en_core_web_sm')
 
 def process_text(text:str):
   next_stage = {}
-  print('process text', text)
   parsed_text = nlp(text)
 
   #get token dependencies
@@ -37,7 +36,6 @@ def process_text(text:str):
         'name': 'hue_interface.output_lights',
         'args': [full_color_phrase]
       }
-  print('next_stage', next_stage)
   if next_stage:
     return next_stage
 

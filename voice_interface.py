@@ -13,7 +13,7 @@ def runner(event_queue:multiprocessing.Queue):
   r = speech_recognition.Recognizer()
 
   porcupine = pvporcupine.create(access_key=pvporcupine_key, keywords=['jarvis'])
-
+  
   with speech_recognition.Microphone(sample_rate=porcupine.sample_rate, chunk_size=porcupine.frame_length) as source:
     while True:
       pcm = source.stream.read(porcupine.frame_length)
@@ -35,5 +35,4 @@ def runner(event_queue:multiprocessing.Queue):
 def input_voice(event_queue:multiprocessing.Queue, exit_handlers:list):
   input_voice_thread = multiprocessing.Process(target=runner, args=(event_queue,))
   input_voice_thread.start()
-  
   exit_handlers.append(lambda: input_voice_thread.terminate())
