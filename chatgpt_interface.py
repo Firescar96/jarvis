@@ -46,16 +46,15 @@ async def default(text:str):
     if not partial_response:
       continue
     mp3_fp = BytesIO()
-    tts = gTTS(partial_response, lang='en', tld='com.au')
+    tts = gTTS(partial_response, lang='en', tld='co.uk')
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
     audio = AudioSegment.from_file(mp3_fp, format="mp3")
-    audio = speedup(audio,1.5,100)
+    audio = speedup(audio,1.7,100)
     audio_queue.put(audio.raw_data)
   
   audio_queue.put(None)
   
   sound_output_process.join()
-
 
 # tts.tts_to_file(text=partial_response, speaker=tts.speakers[0], language=tts.languages[0], file_path=mp3_fp)

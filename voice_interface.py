@@ -1,4 +1,4 @@
-import re
+import threading
 import multiprocessing
 import pyaudio
 import struct
@@ -31,6 +31,18 @@ def runner(event_queue:multiprocessing.Queue):
         event_queue.put(next_event)
       except:
         pass
+
+def _read_voice():
+  r = speech_recognition.Recognizer()
+  with speech_recognition.Microphone() as source:
+    audio = r.listen(source)
+    return r.recognize_google(audio)
+    
+# this is a function that uses speech_recognition to listen to the microphone and then returns the parsed text
+def read_voice():
+  # for some reason if I don't use multiprocessing here, the audio stream won't output to my speakers
+  with multiprocessing.Pool(processes=1) as pool:
+    return pool.apply(_read_voice)
 
 def input_voice(event_queue:multiprocessing.Queue, exit_handlers:list):
   input_voice_thread = multiprocessing.Process(target=runner, args=(event_queue,))
